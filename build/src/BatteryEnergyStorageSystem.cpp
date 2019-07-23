@@ -59,7 +59,7 @@ void BatteryEnergyStorageSystem::Loop (float delta_time){
 			BatteryEnergyStorageSystem::IdleLoss ();
 		}
 	}
-	if (one_minute && utc != last_log_) {
+	if (five_seconds && utc != last_log_) {
 		last_log_ = utc;
 		BatteryEnergyStorageSystem::Log ();
 	}
@@ -105,16 +105,15 @@ void BatteryEnergyStorageSystem::ImportPower () {
 		inverter_.WritePoint (64120, point);
 		point.clear();
 	}
-
-	unsigned int real_watts = GetImportPower ();
-	float control_watts = GetImportWatts ();
-	if (real_watts > 1.1*control_watts || real_watts < 0.9*control_watts) {
-		float current_limit = control_watts / split_vac_;
-		point ["OB_Set_Inverter_Charger_Current_Limit"] 
-			= std::to_string (current_limit);
-		inverter_.WritePoint (64120, point);
-		point.clear();
-	}
+		float control_watts = GetImportWatts ();
+		float real_watts = GetImportPower ();
+		if (real_watts != control_watts) {
+			float current_limit = control_watts / split_vac_;
+			point ["OB_Set_Inverter_Charger_Current_Limit"]
+				= std::to_string (current_limit);
+			inverter_.WritePoint (64120, point);
+			point.clear();
+		}
 };  // end Import Power
 
 // Export Power
@@ -145,16 +144,15 @@ void BatteryEnergyStorageSystem::ExportPower () {
 		inverter_.WritePoint (64120, point);
 		point.clear();
 	}
-
-	unsigned int real_watts = GetExportPower ();
-	float control_watts = GetExportWatts ();
-	if (real_watts > 1.1*control_watts || real_watts < 0.9*control_watts) {
-		float current_limit = control_watts / split_vac_;
-		point ["OB_Set_Radian_Inverter_Sell_Current_Limit"] 
+		float control_watts = GetExportWatts ();
+		float real_watts = GetExportPower ();
+		if (real_watts != control_watts) {
+			float current_limit = control_watts / split_vac_;
+			point ["OB_Set_Radian_Inverter_Sell_Current_Limit"] 
 			= std::to_string (current_limit);
-		inverter_.WritePoint (64120, point);
-		point.clear();
-	}
+			inverter_.WritePoint (64120, point);
+			point.clear ();
+		}
 };  // end Export Power
 
 // Idle Loss
@@ -180,7 +178,6 @@ void BatteryEnergyStorageSystem::IdleLoss (){
 // Log
 void BatteryEnergyStorageSystem::Log () {
 	Logger ("DATA", GetLogPath ()) 
-		<< "E: W, P, E, I: W, P, E, M" << "\t"
 		<< GetExportWatts () << "\t"
 		<< GetExportPower () << "\t"
 		<< GetExportEnergy () << "\t"

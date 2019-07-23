@@ -24,4 +24,4 @@ export SRC=dcs
 make -C ../build
 
 # run
-./../build/bin/debug/$SRC -c ../data/config.ini -o n
+./../build/bin/debug/$SRC -c ../data/config.ini -o y
